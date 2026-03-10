@@ -16,8 +16,9 @@
 
 using CSV, DataFrames
 
-const SRC_DIR    = raw"C:\Users\jborr\OneDrive\Desktop\My stuff\Career\RunToSolve\Fire Curves\ASI216.1m.14 Plots"
-const ASSETS_DIR = raw"C:\Users\jborr\OneDrive\Desktop\My stuff\Career\RunToSolve\ACI216.jl\assets"
+const _REPO_ROOT = joinpath(@__DIR__, "..")
+const SRC_DIR    = joinpath(_REPO_ROOT, "..", "ASI216.1m.14 Plots")
+const ASSETS_DIR = joinpath(_REPO_ROOT, "assets")
 
 # -----------------------------------------------------------------------------
 # Helper: read a wide-format CSV and return a long-format DataFrame

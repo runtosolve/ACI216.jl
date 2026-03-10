@@ -56,12 +56,6 @@ const _CONCRETE_FILENAMES = Dict{String,String}(
 # Module-level data cache — populated in ACI216.__init__()
 const _TEMP_DATA = Dict{String,DataFrame}()
 
-"""
-    _load_temperature_data()
-
-Load all three concrete-type CSV files into the module cache `_TEMP_DATA`.
-Called once from `ACI216.__init__()`.
-"""
 function _load_temperature_data()
     for (ct, fname) in _CONCRETE_FILENAMES
         path = joinpath(_ASSETS_DIR, fname)
@@ -137,23 +131,19 @@ function temperature_within_slab(
         "[$d_min, $d_max] mm for concrete_type = \"$concrete_type\"",
     ))
 
-    # ---- Find bounding depth curves -----------------------------------------
     idx = searchsortedfirst(depths, distance_from_fire)
 
     if depths[idx] == distance_from_fire
-        # Exact depth match — skip depth interpolation
         T_F = _interp_time(df, depths[idx], fire_time, concrete_type)
         return temperature_unit == :celsius ? F_to_C(T_F) : T_F
     end
 
-    d_lo = depths[idx - 1]  # smaller depth (closer to fire, hotter)
-    d_hi = depths[idx]      # larger depth  (farther from fire, cooler)
+    d_lo = depths[idx - 1]
+    d_hi = depths[idx]
 
-    # ---- 1D interpolation in time at each bounding depth --------------------
     T_lo = _interp_time(df, d_lo, fire_time, concrete_type)
     T_hi = _interp_time(df, d_hi, fire_time, concrete_type)
 
-    # ---- 1D linear interpolation in depth -----------------------------------
     α   = (distance_from_fire - d_lo) / (d_hi - d_lo)
     T_F = T_lo + α * (T_hi - T_lo)
     return temperature_unit == :celsius ? F_to_C(T_F) : T_F
@@ -211,12 +201,6 @@ end
 # Internal helper
 # -----------------------------------------------------------------------------
 
-"""
-    _interp_time(df, depth_mm, fire_time, concrete_type) -> Float64
-
-Build a 1D linear interpolant over time for a single depth curve and evaluate
-it at `fire_time`.  Throws `ArgumentError` if `fire_time` is out of range.
-"""
 function _interp_time(
     df::DataFrame,
     depth_mm::Real,

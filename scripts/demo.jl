@@ -9,6 +9,7 @@
 
 using ACI216
 using Printf
+using Plots
 
 println("\n", "="^70)
 println(" ACI216.jl DEMO")
@@ -175,6 +176,82 @@ rc = rebar_condition(120.0, 30.0, "carbonate")
 @printf("  Temperature at rebar: %.1f °F  /  %.1f °C\n", rc.temperature_F, rc.temperature_C)
 @printf("  Steel fy retention:       %.2f  (%.0f%%)\n", rc.steel_fraction,    rc.steel_fraction    * 100)
 @printf("  Concrete f'c retention:   %.2f  (%.0f%%)\n", rc.concrete_fraction, rc.concrete_fraction * 100)
+
+# -----------------------------------------------------------------------------
+# 9. Temperature within slab — carbonate aggregate (plot)
+#
+# Plots all digitised depth curves and overlays a single interpolated point
+# at a depth and fire time that falls between two curves, demonstrating the
+# 2D linear interpolation capability of temperature_within_slab().
+# -----------------------------------------------------------------------------
+
+println("\n--- 9. Temperature within slab plot (carbonate) ---")
+
+_max_time = Dict(
+    5 => 30, 10 => 60, 15 => 90, 20 => 120, 25 => 150, 30 => 180,
+    40 => 240, 50 => 240, 60 => 240, 70 => 240, 80 => 240,
+    90 => 240, 100 => 240, 125 => 240, 150 => 240, 180 => 240,
+)
+
+_plot_depths = [10, 20, 30, 50, 70, 100, 150]
+_colours = range(colorant"steelblue", colorant"firebrick"; length = length(_plot_depths))
+
+p = plot(
+    xlabel         = "Fire exposure time (min)",
+    ylabel         = "Temperature (°F)",
+    title          = "Temperature Within Slab — Carbonate Aggregate\n(ACI 216.1M-14 Fig. 4.4.2.2.1a(a))",
+    legend         = :bottomright,
+    size           = (800, 520),
+    framestyle     = :box,
+    grid           = true,
+    gridalpha      = 0.3,
+    minorgrid      = true,
+    minorgridalpha = 0.15,
+    titlefont      = font(11),
+    guidefont      = font(10),
+    tickfont       = font(9),
+    legendfont     = font(6),
+    legendtitle    = "",
+)
+
+for (d, col) in zip(_plot_depths, _colours)
+    times = range(30.0, _max_time[d]; length = 60)
+    temps = [temperature_within_slab(t, Float64(d), "carbonate") for t in times]
+    plot!(p, times, temps; label = "$(d) mm", color = col, lw = 1.8, alpha = 0.85)
+end
+
+# Interpolated point: 35 mm depth, 105 min — between digitised curves in both axes
+_interp_depth = 35.0
+_interp_time  = 105.0
+_interp_temp  = temperature_within_slab(_interp_time, _interp_depth, "carbonate")
+
+_t30 = range(30.0, _max_time[30]; length = 60)
+_t40 = range(30.0, _max_time[40]; length = 60)
+plot!(p, _t30, [temperature_within_slab(t, 30.0, "carbonate") for t in _t30];
+      label = "30 mm (bracket)", color = :darkorange, lw = 2.2, ls = :dash, alpha = 0.9)
+plot!(p, _t40, [temperature_within_slab(t, 40.0, "carbonate") for t in _t40];
+      label = "40 mm (bracket)", color = :darkgreen,  lw = 2.2, ls = :dash, alpha = 0.9)
+
+vline!(p, [_interp_time]; color = :grey50, lw = 1.0, ls = :dot, label = "")
+hline!(p, [_interp_temp]; color = :grey50, lw = 1.0, ls = :dot, label = "")
+
+scatter!(p, [_interp_time], [_interp_temp];
+         markersize = 9, markercolor = :white,
+         markerstrokecolor = :black, markerstrokewidth = 2,
+         label = @sprintf("Interp. (%.0f mm, %.0f min) → %.0f °F",
+                           _interp_depth, _interp_time, _interp_temp))
+
+annotate!(p,
+    _interp_time + 6, _interp_temp + 30,
+    text(@sprintf("  (%.0f mm, %.0f min)\n  %.0f °F  /  %.0f °C",
+                  _interp_depth, _interp_time, _interp_temp, F_to_C(_interp_temp)),
+         :left, 8, :black))
+
+_outpath = joinpath(@__DIR__, "..", "outputs", "temperature_within_slab_carbonate.png")
+mkpath(dirname(_outpath))
+savefig(p, _outpath)
+println("  Plot saved → $(_outpath)")
+display(p)
 
 println("="^70)
 println(" End of demo")

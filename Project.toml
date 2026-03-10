@@ -1,12 +1,12 @@
 name = "ACI216"
 uuid = "9b36f528-c610-413a-8a0c-c354fc8dc317"
 version = "0.1.0"
-authors = ["Cris Moen <cris.moen@runtosolve.com>"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 
@@ -14,5 +14,6 @@ StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 CSV = "0.10.16"
 DataFrames = "1.8.1"
 Interpolations = "0.16.2"
+Plots = "1.41.6"
 Printf = "1.11.0"
 StructTypes = "1"

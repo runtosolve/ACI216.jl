@@ -1,86 +1,75 @@
 # ACI216.jl
 
-A Julia package for concrete fire resistance checks per **ACI/TMS 216.1M-14**.
+A Julia package for concrete slab fire resistance per **ACI/TMS 216.1M-14** and **ACI 318M-14**.
 
 ## Installation
 
-This package is not yet registered in the Julia General Registry. Add it directly from GitHub:
-
 ```julia
 using Pkg
 Pkg.add(url = "https://github.com/runtosolve/ACI216.jl")
 ```
 
-To add it to an existing project (e.g. SMI-Backend):
+## Capabilities
 
-```julia
-# From inside the project directory:
-using Pkg
-Pkg.activate(".")
-Pkg.add(url = "https://github.com/runtosolve/ACI216.jl")
-```
+| Function | Description |
+|---|---|
+| `temperature_within_slab` | Temperature at depth within a slab (ASTM E119 fire) |
+| `temperature_profile` | Temperatures at multiple depths |
+| `fire_resistance_rating` | Pass/fail check — Table 4.2 thickness + Table 4.3.1.1 cover |
+| `maximum_fire_rating` | Highest rating (minutes) the slab achieves |
+| `equivalent_thickness` | Equivalent thickness for ribbed slabs (§4.2.4) |
+| `concrete_strength_reduction` | f'c retention fraction at elevated temperature |
+| `steel_strength_reduction` | fy retention fraction at elevated temperature |
+| `concrete_critical_temperature` | Temperature at which f'c drops below a threshold |
+| `steel_critical_temperature` | Temperature at which fy drops below a threshold |
 
-## What it does
-
-- **Temperature interpolation** — estimates the temperature at any distance from the fire-exposed surface inside a concrete slab exposed to a standard ASTM E119 fire, based on digitized ACI 216.1M-14 test curves for carbonate, siliceous, and semi-lightweight aggregate concrete.
-- **Fire resistance rating check** — evaluates whether a slab passes the prescriptive ACI 216.1M-14 requirements (Table 4.2 minimum thickness, Table 4.3.1.1 minimum cover) for ratings from 1 to 4 hours.
+Supported aggregate types: `"carbonate"`, `"siliceous"`, `"semi_lightweight"`, `"lightweight"`
 
 ## Usage
 
-### Temperature at a distance from the fire-exposed surface
-
 ```julia
 using ACI216
 
-# Temperature (°F) at 50 mm from the fire-exposed surface in a carbonate slab after 120 minutes
-T = temperature_within_slab(120, 50, "carbonate")
-```
+# Temperature at 40 mm depth after 120 min — carbonate slab
+T = temperature_within_slab(120.0, 40.0, "carbonate")           # °F
+T = temperature_within_slab(120.0, 40.0, "carbonate"; temperature_unit=:celsius)
 
-Supported concrete types: `"carbonate"`, `"siliceous"`, `"semi_lightweight"`
+# Equivalent thickness — ribbed slab (tmin=65 mm, spacing=180 mm, avg=100 mm)
+te = equivalent_thickness(65.0, 180.0, 100.0)
 
-### Fire resistance rating check
-
-```julia
-using ACI216
-
-# Check a 150 mm carbonate slab with 25 mm cover, unrestrained
-res = fire_resistance_rating("carbonate", false, 150.0, 25.0)
+# Fire resistance rating check — unrestrained, interior, nonprestressed
+res = fire_resistance_rating("carbonate", false, 150.0, 30.0)
 print_fire_resistance_summary(res)
+
+# With ACI 318M-14 durability cover — exterior slab
+res = fire_resistance_rating("carbonate", false, 150.0, 40.0;
+    exposure_condition = "exposed_to_weather",
+    bar_diameter_mm    = 16.0)
+
+# Prestressed slab — bonded tendons
+res = fire_resistance_rating("carbonate", false, 150.0, 40.0;
+    prestressed = true,
+    tendon_type = "bonded")
+
+# Maximum achievable fire rating (minutes)
+m = maximum_fire_rating("carbonate", false, 150.0, 30.0)
+
+# Material strength at 1000 °F
+f_concrete = concrete_strength_reduction(1000.0, "carbonate", "unstressed")
+f_steel    = steel_strength_reduction(1000.0)
+
+# Critical temperatures
+T_concrete = concrete_critical_temperature(0.75, "carbonate", "unstressed")
+T_steel    = steel_critical_temperature(0.80)
 ```
 
-Arguments: `aggregate_type` (String), `restrained` (Bool), `slab_thickness_mm`, `clear_cover_mm`
+## Demo
 
-To check specific ratings only:
-
-```julia
-res = fire_resistance_rating("siliceous", true, 125.0, 20.0; ratings=[60, 120, 180])
+```
+julia --project=. scripts/demo.jl
 ```
 
-### Material strength reduction
+## Standards
 
-Returns the retained strength fraction (0.0–1.0) at elevated temperature.
-
-**Concrete compressive strength:**
-
-```julia
-using ACI216
-
-# Fraction of f'c remaining at 800 °F for unstressed carbonate concrete
-f = concrete_strength_reduction(800.0, "carbonate", "unstressed")
-```
-
-Aggregate types: `"carbonate"`, `"siliceous"`, `"semi_lightweight"`
-
-Conditions for carbonate and siliceous: `"unstressed"`, `"stressed"`, `"unstressed_residual"`
-
-Conditions for semi-lightweight: `"unstressed_sanded"`, `"unstressed_unsanded"`, `"stressed"`, `"unstressed_residual_sanded"`
-
-Temperatures outside the data range are clamped to the nearest endpoint (no extrapolation).
-
-**Steel yield strength:**
-
-```julia
-# Fraction of fy remaining at 1000 °F for hot-rolled flexural reinforcement
-f = steel_strength_reduction(1000.0)
-```
-
+- ACI/TMS 216.1M-14 — Tables 4.2, 4.3.1.1 and Section 4.2.4
+- ACI 318M-14 — Tables 20.6.1.3.1 (nonprestressed) and 20.6.1.4.1 (prestressed)

@@ -44,12 +44,6 @@ const _STEEL_FRACS = Ref{Vector{Float64}}(Float64[])
 # Data loader  (called from ACI216.__init__)
 # -----------------------------------------------------------------------------
 
-"""
-    _load_strength_data()
-
-Load all concrete and steel strength-reduction CSVs from the assets directory
-into the module-level caches.  Called once from `ACI216.__init__()`.
-"""
 function _load_strength_data()
     # --- Concrete ---
     for (ct, fname) in _CONCRETE_STRENGTH_FILES
@@ -78,12 +72,6 @@ end
 # Internal interpolation helper
 # -----------------------------------------------------------------------------
 
-"""
-    _strength_interp(temps, fracs, temp_F) -> Float64
-
-Piecewise-linear interpolation over a (sorted) temperature–fraction vector pair.
-Clamps to the first value below the data range and to the last value above it.
-"""
 function _strength_interp(
     temps  :: Vector{Float64},
     fracs  :: Vector{Float64},
@@ -205,16 +193,6 @@ end
 # Internal helper for critical-temperature search
 # -----------------------------------------------------------------------------
 
-"""
-    _critical_temp_from_data(temps, fracs, threshold) -> Float64
-
-Return the temperature at which `fracs` first drops to or below `threshold`
-by linear interpolation between adjacent knots.
-
-- Returns `temps[1]` if `fracs[1] ≤ threshold` (already at or below from the start).
-- Returns `Inf` if `fracs[end] > threshold` (never reaches threshold in the data range).
-- `threshold` must be in [0, 1].
-"""
 function _critical_temp_from_data(
     temps     :: Vector{Float64},
     fracs     :: Vector{Float64},

@@ -487,25 +487,14 @@ checking Table 4.2 fire-resistance requirements for non-flat slab soffits.
   required by the branching logic.
 
 # Returns
-Equivalent thickness `te` in mm (Float64).
-
-# Branching logic (§4.2.4)
-| Condition           | Result                                              |
-|---------------------|-----------------------------------------------------|
-| `s > 4·tmin`        | `tmin` (ribs too wide; ignored)                     |
-| `s ≤ 2·tmin`        | `min(avg_thickness_mm, 2·tmin)`                     |
-| `2·tmin < s ≤ 4·tmin` | Eq. 4.2.4.3 interpolation (see below)             |
-
-Eq. 4.2.4.3:  `te = tmin + (4·tmin/s − 1) · (te2 − tmin)`
-where `te2 = min(avg_thickness_mm, 2·tmin)`.
+Equivalent thickness `te` in mm (Float64).  Branching per §4.2.4:
+- `s > 4·tmin`: returns `tmin`
+- `s ≤ 2·tmin`: returns `min(avg_thickness_mm, 2·tmin)`
+- otherwise:   Eq. 4.2.4.3  `te = tmin + (4·tmin/s − 1) · (te2 − tmin)`
 
 # Example
 ```julia
-# Ribbed slab: tmin = 65 mm, rib spacing = 180 mm, average thickness = 100 mm
 te = equivalent_thickness(65.0, 180.0, 100.0)
-# s = 180, 2·tmin = 130, 4·tmin = 260  →  formula branch
-# te2 = min(100, 130) = 100
-# te  = 65 + (4·65/180 − 1)·(100 − 65) ≈ 65 + 0.444·35 ≈ 80.6 mm
 ```
 """
 function equivalent_thickness(
@@ -522,13 +511,10 @@ function equivalent_thickness(
     avg  > 0 || throw(ArgumentError("avg_thickness_mm must be positive. Got: $avg"))
 
     if s > 4.0 * tmin
-        # Ribs too widely spaced — ignore them; use minimum thickness only.
         return tmin
     elseif s <= 2.0 * tmin
-        # Dense ribs — cap at 2·tmin.
         return min(avg, 2.0 * tmin)
     else
-        # 2·tmin < s ≤ 4·tmin — interpolate via Eq. 4.2.4.3.
         te2 = min(avg, 2.0 * tmin)
         return tmin + (4.0 * tmin / s - 1.0) * (te2 - tmin)
     end
