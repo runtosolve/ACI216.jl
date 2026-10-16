@@ -2,7 +2,8 @@
 # ACI216.jl — Demo Script
 #
 # Run from the package root:
-#   julia --project=. scripts/demo.jl
+#   julia --project=scripts -e 'using Pkg; Pkg.instantiate()'   # once
+#   julia --project=scripts scripts/demo.jl
 #
 # Demonstrates all major public functions in the package.
 # =============================================================================

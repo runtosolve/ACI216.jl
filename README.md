@@ -65,8 +65,12 @@ T_steel    = steel_critical_temperature(0.80)
 
 ## Demo
 
+The demo uses Plots, which is kept out of the package's own dependencies.
+It has its own environment in `scripts/`:
+
 ```
-julia --project=. scripts/demo.jl
+julia --project=scripts -e 'using Pkg; Pkg.instantiate()'
+julia --project=scripts scripts/demo.jl
 ```
 
 ## Standards
